@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Design Marketplace — Gerald Design Hub</title>
+  <title>Design Marketplace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -77,6 +77,9 @@
     .btn-parks:hover { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.35); }
     .btn-date { background: rgba(16,185,129,0.07); color: #6ee7b7; border-color: rgba(16,185,129,0.18); }
     .btn-date:hover { background: rgba(16,185,129,0.14); border-color: rgba(16,185,129,0.32); }
+    .btn-copy { background: rgba(234,179,8,0.07); color: #fcd34d; border-color: rgba(234,179,8,0.2); }
+    .btn-copy:hover { background: rgba(234,179,8,0.14); border-color: rgba(234,179,8,0.38); }
+    .btn-copy.copied { background: rgba(34,197,94,0.14); color: #86efac; border-color: rgba(34,197,94,0.36); }
 
     /* TEASER CARD */
     .teaser-card { background: #0c0c0c; border: 1px dashed #1e1e1e; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 280px; gap: 8px; padding: 32px; text-align: center; }
@@ -113,7 +116,7 @@
   <!-- HERO -->
   <div class="hero">
     <div class="hero-aurora"></div>
-    <div class="hero-pill"><div class="hero-pill-dot"></div>Gerald Design Hub</div>
+    <div class="hero-pill"><div class="hero-pill-dot"></div>Design Hub</div>
     <h1 class="hero-title">Design<br>Marketplace</h1>
     <p class="hero-sub">Pick a style. Apply it to any project.</p>
     <p class="hero-stat"><span>100 distinct aesthetics</span> · ready to ship</p>
@@ -2968,7 +2971,7 @@
   </div><!-- /marketplace -->
 
   <footer>
-    <strong>Built by Gerald</strong> &nbsp;·&nbsp; Gerald Design Hub &nbsp;·&nbsp; 100 styles
+    <strong>Design Hub</strong> &nbsp;·&nbsp; 100 styles
   </footer>
 
   <!-- MODAL -->
@@ -4448,6 +4451,61 @@
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') closeModal();
+    });
+
+    function buildPromptFor(card) {
+      const name = (card.querySelector('.card-name')?.textContent || '').trim();
+      const desc = (card.querySelector('.card-desc')?.textContent || '').trim();
+      const tags = Array.from(card.querySelectorAll('.tag'))
+        .map(t => t.textContent.trim().replace(/^#/, ''))
+        .filter(Boolean);
+      const cat = (card.querySelector('.cat-badge')?.textContent || '').trim();
+      const parts = [
+        `Design this page in the "${name}" aesthetic.`,
+        desc,
+        tags.length ? `Style tags: ${tags.join(', ')}.` : '',
+        cat ? `Category: ${cat}.` : '',
+        `Apply it consistently across layout, typography, color palette, spacing, and interactive elements.`
+      ].filter(Boolean);
+      return parts.join(' ');
+    }
+
+    async function copyPrompt(btn) {
+      const card = btn.closest('.style-card');
+      if (!card) return;
+      const text = buildPromptFor(card);
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(ta);
+      }
+      const original = btn.dataset.original || btn.textContent;
+      btn.dataset.original = original;
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      clearTimeout(btn._copyTimer);
+      btn._copyTimer = setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1400);
+    }
+
+    document.querySelectorAll('.style-card .card-actions').forEach(actions => {
+      if (actions.querySelector('.btn-copy')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-copy';
+      btn.textContent = '⧉ Copy prompt';
+      btn.title = 'Copy an AI-ready prompt for this style';
+      btn.addEventListener('click', () => copyPrompt(btn));
+      actions.appendChild(btn);
     });
   </script>
 
